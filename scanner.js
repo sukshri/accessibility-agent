@@ -1,29 +1,47 @@
 const { chromium } = require('playwright');
 const axeSource = require('axe-core').source;
 
+
+
 async function scanPage(url) {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
+  let browser;
 
-  const page = await browser.newPage();
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process'
+      ]
+    });
 
-  await page.goto(url, {
-    waitUntil: 'domcontentloaded',
-    timeout: 60000
-  });
+    const page = await browser.newPage();
 
-  await page.waitForTimeout(2000);
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000
+    });
 
-  await page.addScriptTag({ content: axeSource });
+    await page.waitForTimeout(2000);
 
-  const results = await page.evaluate(async () => {
-    return await axe.run();
-  });
+    await page.addScriptTag({ content: axeSource });
 
-  await browser.close();
-  return results;
+    const results = await page.evaluate(async () => {
+      return await axe.run();
+    });
+
+    return results;
+
+  } catch (err) {
+    console.error("Scan error:", err);
+    throw err;
+
+  } finally {
+    if (browser) await browser.close();
+  }
 }
+
 
 module.exports = { scanPage };
