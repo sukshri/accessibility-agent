@@ -5,7 +5,8 @@ async function scanPage(url) {
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
-  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForTimeout(2000);
 
   await page.addScriptTag({ content: axeSource });
 
@@ -18,4 +19,4 @@ async function scanPage(url) {
   return results;
 }
 
-module.exports = { scanPage };
+module.exports = { scanPage };  
