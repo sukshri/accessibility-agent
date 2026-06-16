@@ -4,10 +4,18 @@ const { scanPage } = require('./scanner');
 const app = express();
 app.use(express.json());
 
-app.post('/scan', async (req, res) => {
-  const { url } = req.body;
 
+app.post('/scan', async (req, res) => {
   try {
+    console.log('Incoming body:', req.body);
+
+    const { url } = req.body;
+
+    if (!url) {
+      console.error('Missing URL in request body');
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
     const results = await scanPage(url);
 
     const formatted = results.violations.map(v => ({
@@ -23,11 +31,18 @@ app.post('/scan', async (req, res) => {
 
     res.json({ issues: formatted });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Scan error:', err);
+    res.status(500).json({
+      error: err.message,
+      stack: err.stack
+    });
   }
 });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
 
 
 
